@@ -40,33 +40,33 @@ int lost = 3;
 int temp = 0;
 
 //node class for priority queue
-struct Node {
-    int x;
-    int y;
-    double h;
-    Node(){
-        this->x = 0;
-        this->y = 0;
-        this->h = 0.0;
-    }
-    Node(const int x, const int y, double h)
-        : x(x), y(y), h(h)
-    {
-    }
-    void updateh(double h){
-        this->h = h;
-    }
-};
+//struct Node {
+//    int x;
+//    int y;
+//    double h;
+//    Node(){
+//        this->x = 0;
+//        this->y = 0;
+//        this->h = 0.0;
+//    }
+//    Node(const int x, const int y, double h)
+//        : x(x), y(y), h(h)
+//    {
+//    }
+//    void updateh(double h){
+//        this->h = h;
+//    }
+//};
 
 //comparison function for priority queue
-class compareCost{
-    public:
-    bool operator()(Node n1, Node n2)
-    {
-        //mexPrintf("f1: %f, f2: %f\n", n1.f, n2.f);
-        return n1.h > n2.h;
-    }
-};
+//class compareCost{
+//    public:
+//    bool operator()(Node n1, Node n2)
+//    {
+//        //mexPrintf("f1: %f, f2: %f\n", n1.f, n2.f);
+//        return n1.h > n2.h;
+//    }
+//};
 
 double findDist(int i, int j, int curX, int curY){
     return sqrt(pow(double(i - curX),2) + pow(double(j - curY),2));
@@ -101,15 +101,15 @@ int* findNearestLostPerson(double* map, int xDim, int yDim, int curX, int curY){
 }
 
 //create a graph of nodes including heuristics
-Node** createGraph(double*	map, int xDim, int yDim, int curX, int curY){
+double** createGraph(double*	map, int xDim, int yDim, int curX, int curY){
     int* lostPos = findNearestLostPerson(map, xDim, yDim, curX, curY);
     //create the node list in the 'vertical dimension' and start to fill in
-    Node** g = (Node**) malloc(yDim*sizeof(Node*));
-    for (int i = 0; i < yDim; i++){
+    double** g = (double**) malloc(xDim*sizeof(double*));
+    for (int i = 0; i < xDim; i++){
         //create the node list in the 'horizontal dimension' and add in Nodes
-        Node* row = (Node*) malloc(xDim*sizeof(Node));
-        for(int j = 0; j < xDim; j++){
-            row[j] = Node(i, j, findDist(i, j, lostPos[0], lostPos[1]));
+        double* row = (double*) malloc(yDim*sizeof(double));
+        for(int j = 0; j < yDim; j++){
+            row[j] = findDist(i, j, lostPos[0], lostPos[1]);
         }
         g[i] = row;
     }

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ZOMBIE_PLAN
+#define ZOMBIE_PLAN
 #include <unordered_map>
 #include <utility>
 #include <queue>
@@ -14,9 +15,17 @@
 #define	MIN(a, b)	((a) < (b) ? (a) : (b))
 #endif
 
+#define NUMOFDIRS 8
+
 
 typedef std::pair<int, int> pos;
 typedef std::pair<int, int> action;
 
 
-action zombie_planner();
+void zombie_planner() {
+  return;
+}
+
+
+
+#endif /* ZOMBIE_PLAN */

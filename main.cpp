@@ -15,7 +15,12 @@ void main() {
 
   while (1) {
 
+    /* check if searcher is near lost person (check curr_state's heuristic value in map,
+       if its <= 1.4 then it is adjacent to it) */
+
+
     // check if searcher is within any zombie's viewing distance
+    
     
     if (/*searcher is within proximity of zombie*/) {
       is_searching = false;

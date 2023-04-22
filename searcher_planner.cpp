@@ -1,4 +1,4 @@
-#include "lib.h"
+#include "searcher_planner.h"
 
 action LRTA(pos start, pos goal, double** map, int x_size, int y_size) {
 

@@ -22,8 +22,8 @@ typedef std::pair<int, int> pos;
 typedef std::pair<int, int> action;
 
 
-void zombie_planner() {
-  return;
+action zombie_planner() {
+  return std::make_pair(0, 0);
 }
 
 

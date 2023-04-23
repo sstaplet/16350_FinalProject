@@ -47,20 +47,6 @@ action zombie_planner(pos curr_state, pos searcher, int radius, double** map, in
     int chase = isSeen(curr_state, searcher, radius);
 
     if (chase) {
-        while(1) {
-            int dx = dirs[rand()%3];
-            int dy = dirs[rand()%3];
-
-            int x = curr_state.first + dx;
-            int y = curr_state.second + dy;
-
-            if ((x <= x_size) || (y <= y_size)) {
-                next_action.first = dx;
-                next_action.second = dy;
-                break;
-            }
-        }
-    } else {
         int dx = curr_state.first - searcher.first;
         int dy = curr_state.second - searcher.second;
 
@@ -100,6 +86,20 @@ action zombie_planner(pos curr_state, pos searcher, int radius, double** map, in
         } else {
             next_action.first = -1;
             next_action.second = 0;
+        }
+    } else {
+        while(1) {
+            int dx = dirs[rand()%3];
+            int dy = dirs[rand()%3];
+
+            int x = curr_state.first + dx;
+            int y = curr_state.second + dy;
+
+            if ((x <= x_size) || (y <= y_size)) {
+                next_action.first = dx;
+                next_action.second = dy;
+                break;
+            }
         }
     }
 

@@ -26,6 +26,27 @@ int dY[NUMOFDIRS] = { -1,  0,  1, -1,  1, -1, 0, 1 };
 typedef std::pair<int, int> pos;
 typedef std::pair<int, int> action;
 
+namespace std { // define hash function for nodes
+	template <> struct hash<std::pair<int, int>> {
+		std::size_t operator()(const std::pair<int, int>& N) const noexcept {
+			int x = N.first;
+			int y = N.second;
+			// Matthew Szudzik Elegant Pairing Function 
+			// : provides unique mapping of a pair of ints to one int
+			// works for a great hashing function
+			return (x >= y ? x * x + x + y : x + y * y);
+		}
+	};
+}
+
+bool operator == (std::pair<int, int> a, std::pair<int, int> b) {
+	return a.first == b.first && a.second == b.second;
+}
+
+bool operator != (std::pair<int, int> a, std::pair<int, int> b) {
+	return a.first != b.first || a.second != b.second;
+}
+
 bool in_bounds(int x, int y, int x_size, int y_size) {
 	return (x >= 1 && y >= 1 && x <= x_size && y <= y_size);
 }
@@ -79,7 +100,10 @@ action LRTA(pos curr_state, double** map, int x_size, int y_size) {
   next_action = {best_neighbor.first - curr_state.first, best_neighbor.second - curr_state.second};
 
   /* Update the current state's heuristic value in the map*/
-  map[curr_state.first][curr_state.second] = best_f;
+  if (best_f > map[curr_state.first][curr_state.second]) {
+    map[curr_state.first][curr_state.second] = best_f;
+  }
+  
 
   return next_action;
 }
@@ -173,6 +197,17 @@ action searcher_planner(pos curr_state, std::list<pos> zombie_positions, double*
 pos get_nearest_lost() {
 
   return std::make_pair(0,0);
+}
+
+
+bool in_view(pos person, pos zombie, int dist) {
+  return (euclid_dist(person, zombie) < dist);
+}
+
+
+
+double** generate_map() {
+  return NULL;
 }
 
 

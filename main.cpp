@@ -81,7 +81,7 @@ int main() {
           searcher_is_searching[searcher] = false;
 
           /* Get next actions according to scenario */
-          zombies_next_action[zombie] = zombie_planner(); /* true (non-random, greedy movement) */
+          zombies_next_action[zombie] = zombie_planner(zombie, searcher, 5, curr_map, x_size, y_size); /* true (non-random, greedy movement) */
           searchers_next_action[searcher] = searcher_planner(searcher, zombies, curr_map, x_size, y_size, searcher_is_searching[searcher]);
 
         } else {

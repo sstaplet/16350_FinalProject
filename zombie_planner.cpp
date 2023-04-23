@@ -28,27 +28,15 @@ typedef std::pair<int, int> action;
 
 srand(time(NULL));
 
-int isSeen(pos curr_state, pos searcher, int radius) {
-    int dist_x = pow(fabs(curr_state.first - searcher.first), 2);
-    int dist_y = pow(fabs(curr_state.second - searcher.second), 2);
-    int dist = sqrt(dist_x + dist_y);
-    if (dist < radius) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
 
-action zombie_planner(pos curr_state, pos searcher, int radius, double** map, int x_size, int y_size) {
+action zombie_planner(pos curr_state, pos searcher, int in_view, double** map, int x_size, int y_size) {
     action next_action;
 
     int dirs[3] = {-1, 0, 1};
 
-    int chase = isSeen(curr_state, searcher, radius);
-
-    if (chase) {
-        int dx = curr_state.first - searcher.first;
-        int dy = curr_state.second - searcher.second;
+    if (in_view) {
+        int dx = searcher.first - curr_state.first;
+        int dy = searcher.second - curr_state.second;
 
         double angle = atan2(dy, dx) * 180 / M_PI;
 

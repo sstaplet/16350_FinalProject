@@ -8,7 +8,7 @@ from searcher_planner import *
 def drawEntity(image, entity_loc, image_loc, color):
     screen.blit(image, image_loc)
     pygame.draw.circle(screen, color, entity_loc, 5, 0)
-        
+
 
 def drawGrid():
     for x in range(0, WINDOW_WIDTH, BLOCK_SIZE):
@@ -83,7 +83,7 @@ def main():
     drawEntity(searcher, SEARCHER_START, getImageLoc(SEARCHER_START, SEARCHER_OFFSET), BLUE)
 
     searcher_list = [SEARCHER_START]
-    
+
 
     # init lost
     lost = pygame.image.load("Isaac.png")
@@ -93,21 +93,21 @@ def main():
 
     # init map
     # map = generateMap()
-    
+
     ######
 
     pygame.display.update()
-    
-     
+
+
     # define a variable to control the main loop
     running = True
-     
+
     # main loop
     time = 0
     while running:
         clockobject.tick(5) # Set Frame rate to 10 fps
-        
-        searcher_next_action = (randint(-1, 1)*BLOCK_SIZE, 
+
+        searcher_next_action = (randint(-1, 1)*BLOCK_SIZE,
                                 randint(-1, 1)*BLOCK_SIZE)
 
         # Refresh Screen
@@ -141,7 +141,7 @@ def main():
             if event.type == pygame.QUIT:
                 # change the value to False, to exit the main loop
                 running = False
-                
+
         pygame.display.update()
 
 

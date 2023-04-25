@@ -61,7 +61,6 @@ static void planner() {
 
     /* Conduct the respective tasks per searcher */
     for (pos searcher : searchers) {
-
       double** curr_map = searchers_map[searcher];
 
       /* check if searcher is near lost person (check curr_state's heuristic value in map,

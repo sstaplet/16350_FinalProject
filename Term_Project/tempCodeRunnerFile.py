@@ -1,1 +1,1 @@
-isaac
+print(f"lost: {getImageLoc(loc)}")

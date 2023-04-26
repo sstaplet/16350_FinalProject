@@ -6,7 +6,7 @@ from searcher_planner import *
 
 
 def drawEntity(image, entity_loc, image_loc, color):
-    screen.blit(image, image_loc)
+    # screen.blit(image, image_loc)
     pygame.draw.circle(screen, color, entity_loc, 5, 0)
         
 
@@ -23,8 +23,6 @@ def displayMap(map):
             j = int(y/BLOCK_SIZE)
             text_surface = my_font.render(str(int(map[i][j])), False, (0,0,120))
             screen.blit(text_surface, (x, y))
-
-
 
 # COLORS
 BLUE = (0,0,255)
@@ -64,6 +62,34 @@ ZSTARTY = 9
 ZOMBIE_MAP_LOC = (ZSTARTX, ZSTARTY)
 ZOMBIE_OFFSET = (-42, -50) # for image centering purposes only
 ZOMBIE_START = (ZSTARTX*BLOCK_SIZE, ZSTARTY*BLOCK_SIZE)
+
+# Possible movement variations for Zombies
+ZOMBIE_MOVEMENT_ADVANCED = [(-1,-1), (-1, 0), (-1, 1), (0, -1), 
+                    (0, 1), (1, -1), (1, 0), (1, 1)]
+
+ZOMBIE_MOVEMENT_NORMAL = [(+1, 0), (0, +1), (-1, 0), (0, -1)]
+
+ZOMBIE_MOVEMENT = ZOMBIE_MOVEMENT_NORMAL
+
+
+def zombie_planner(zombie_loc: tuple, searcher_pos: dict) -> tuple:
+    # Returns the action that will minimize the distance between the zombie and
+    # its closest searcher
+    nearest_searcher_ID = getNearestEntityIDFromDict(zombie_loc, searcher_pos, [])
+    nearest_searcher = searcher_pos[nearest_searcher_ID]
+    smallest_dist = 1000
+    best_action = (0, 0)
+
+    for (dx, dy) in ZOMBIE_MOVEMENT:
+        next_state = (zombie_loc[0] + dx, zombie_loc[1] + dy)
+
+        curr_dist = euclid_dist(nearest_searcher, next_state)
+
+        if (curr_dist < smallest_dist):
+            smallest_dist = curr_dist
+            best_action = (dx, dy)
+    
+    return best_action
 
 def getOffsetLoc(loc, offset):
     # Gets images offset needed to center it on point
@@ -111,6 +137,9 @@ def main():
     zombie_pos = dict()
     zombie_pos[zombie_ID] = ZOMBIE_MAP_LOC
 
+    zombie1_ID = 90
+    zombie_pos[zombie1_ID] = (ZOMBIE_MAP_LOC[0] + 10, ZOMBIE_MAP_LOC[1] + 10)
+
     # init searcher
     searcher_image = pygame.image.load("Kobato.png")
     drawEntity(searcher_image, SEARCHER_START, getOffsetLoc(SEARCHER_START, SEARCHER_OFFSET), BLUE)
@@ -126,50 +155,63 @@ def main():
     lost_pos = dict()
     lost_pos[lost_ID] = LOST_MAP_LOC
 
-    # init map
-    # map = generateMap(LOST_MAP_LOC, X_SIZE, Y_SIZE)
+    lost2_ID = 4
+    lost_pos[lost2_ID] = (LOST_MAP_LOC[0] + 10, LOST_MAP_LOC[1])
+
+    lost2_ID = 5
+    lost_pos[lost2_ID] = (LOST_MAP_LOC[0], LOST_MAP_LOC[1] + 5)
+
+    lost2_ID = 6
+    lost_pos[lost2_ID] = (LOST_MAP_LOC[0] - 5, LOST_MAP_LOC[1] + 15)
     
+
     ######
 
     pygame.display.update()
 
-
+    ARENA_EXIT = (1,1)
+    
 
     # Defining algorithm vars.
 
     zombies_next_action = dict()
-    searcher_is_searching = dict()
     searchers_map = dict()
+    searchers_target = dict()
+    being_searched = []
 
     for searcher_ID in searcher_pos:
-        searcher_is_searching[searcher_ID] = True
-        nearest_lost_person = getNearestEntityFromDict(searcher_pos[searcher_ID], lost_pos)
+        nearest_lost_person_ID = getNearestEntityIDFromDict(searcher_pos[searcher_ID], lost_pos, [])
+        nearest_lost_person = lost_pos[nearest_lost_person_ID]
+        searchers_target[searcher_ID] = nearest_lost_person_ID # Map searcher ID to their target Lost person ID
         searchers_map[searcher_ID] = generateMap(nearest_lost_person, X_SIZE, Y_SIZE)
+        being_searched.append(nearest_lost_person_ID) # Keep track of which lost are being searched to avoid aliasing
 
-    for zombie_ID in zombie_pos:
-        zombies_next_action[zombie_ID] = (0, 0)
-     
     # define a variable to control the main loop
     running = True
      
     # main loop
+    tick = 0
     while running:
         clockobject.tick(5) # Set Frame rate to 10 fps
 
         # Refresh Screen
         screen.blit(background, (0,0))
-        drawGrid()       
-        # displayMap(map)
+        drawGrid()
+        drawEntity(searcher_image, getImageLoc(ARENA_EXIT), getOffsetLoc(getImageLoc(ARENA_EXIT), SEARCHER_OFFSET), WHITE)
         
-
         # Main Algorithm
 
         # Compute all default zombie moves
+        for zombie_ID in zombie_pos:
+            if (tick % 2 == 0):
+                zombies_next_action[zombie_ID] = zombie_planner(zombie_pos[zombie_ID], searcher_pos)
+            else:
+                zombies_next_action[zombie_ID] = (0, 0)
+
+        tick += 1
 
         # # Conduct the respective tasks per searcher
-
         searcher_ID_list = list(searcher_pos.keys())
-
         # for searcher_ID in searcher_ID_list:
         n = 0
         while n < len(searcher_ID_list):
@@ -181,50 +223,93 @@ def main():
             if (curr_map[searcher[0]][searcher[1]] <= 1.5):
                 for lost_ID in lost_pos:
                     lost = lost_pos[lost_ID]
+
                     if in_view(searcher, lost, 5):
-                        # move lost from lost dict to searcher dict
+
+                        # Move lost from lost dict to searcher dict
                         del lost_pos[lost_ID] # remove from lost dict
                         searcher_pos[lost_ID] = lost # add to searcher dict
-                        searcher_is_searching[lost_ID] = False 
                         searcher_ID_list.append(lost_ID)
-                        # get next nearest lost
-                        nearest_lost_person = getNearestEntityFromDict(lost, lost_pos)
-                        # make new map for this new searcher
-                        searchers_map[lost_ID] = generateMap(nearest_lost_person, X_SIZE, Y_SIZE)
-                        break
+                        # Generate new searchers new goal
+                        nearest_lost_person_ID = getNearestEntityIDFromDict(lost, lost_pos, being_searched)
+                        being_searched.append(nearest_lost_person_ID) # This lost person is now being tracked, record it in being_searched
+                        
+                        if (nearest_lost_person_ID == -1): # If no lost left
+                            goal = ARENA_EXIT
+                        else:
+                            goal = lost_pos[nearest_lost_person_ID]
+                            
+                        searchers_target[lost_ID] = nearest_lost_person_ID
+                        searchers_map[lost_ID] = generateMap(goal, X_SIZE, Y_SIZE)
+
+                        # Iterate through all searchers, to redirect any searcher
+                        # who had been looking for this lost person
+                        for searcher_ID in searcher_pos:
+                            if searchers_target[searcher_ID] == lost_ID:
+                                # Generate old searchers new goal
+                                nearest_lost_person_ID = getNearestEntityIDFromDict(lost, lost_pos, being_searched)
+                                being_searched.append(nearest_lost_person_ID)# This lost person is now being tracked, record it in being_searched
+                                
+                                if (nearest_lost_person_ID == -1): # If no lost left
+                                    goal = ARENA_EXIT
+                                else:
+                                    goal = lost_pos[nearest_lost_person_ID]
+                                
+                                searchers_target[searcher_ID] = nearest_lost_person_ID
+                                searchers_map[searcher_ID] = generateMap(goal, X_SIZE, Y_SIZE)
+                                
+                                # curr_map = searchers_map[searcher_ID] # UPDATE current map 
+
+                        curr_map = searchers_map[searcher_ID] # Update current searchers map
+
+                        break # break here because we have already found out lost person
             
             # Find the nearest zombie
-            nearest_zombie = getNearestEntityFromDict(searcher, zombie_pos)
+            nearest_zombie_ID = getNearestEntityIDFromDict(searcher, zombie_pos, [])
+            nearest_zombie = zombie_pos[nearest_zombie_ID]
 
-            # Check how close zombie is
-            if in_view(searcher, nearest_zombie, 5):
-                searcher_is_searching[searcher_ID] = False
-                # zombie_next_action = zombie_planner()
-                (searcher_next_action, new_map) = searcherPlanner(searcher, nearest_zombie, curr_map, X_SIZE, Y_SIZE, False)
-            else:
-                if (searcher_is_searching[searcher_ID] == False):
-                    nearest_lost_person = getNearestEntityFromDict(searcher, lost_pos)
-                    # generate a map with respect to the nearest lost person
-                    curr_map = generateMap(nearest_lost_person, X_SIZE, Y_SIZE)
-                    searcher_is_searching[searcher_ID] = True
-
-                # zombie_next_action = zombie_planner()
-                (searcher_next_action, new_map) = searcherPlanner(searcher, nearest_zombie, curr_map, X_SIZE, Y_SIZE, True)
-                   
+            (searcher_next_action, new_map) = LRTA_OR_RUN(searcher, nearest_zombie, curr_map, X_SIZE, Y_SIZE)
             # Update the searchers map if it changes (due to LRTA)
+            
             searchers_map[searcher_ID] = new_map
 
             # Apply next actions
-            # print(searcher_next_action)
+
             searcher = (searcher[0] + searcher_next_action[0], searcher[1] + searcher_next_action[1])
             searcher_pos[searcher_ID] = searcher
             drawEntity(searcher_image, getImageLoc(searcher), getOffsetLoc(getImageLoc(searcher), SEARCHER_OFFSET), BLUE)
 
+
+            # Check if zombie has caught any searcher:
+            for searcher_ID in searcher_pos:
+                searcher_loc = searcher_pos[searcher_ID]
+                for zombie_ID in zombie_pos:
+                    zombie_loc = zombie_pos[zombie_ID]
+                    if (zombie_loc == searcher_loc):
+                        print("MISSION FAILED: ZOMBIE HAS EATEN A CIVILLIAN!")
+
+            # Check if searcher has reached goal
+            remove_from_searchers_list = []
+            for searcher_ID in searcher_pos:
+                searcher_loc = searcher_pos[searcher_ID]
+                if (euclid_dist(searcher_loc, ARENA_EXIT) < 1):
+                    print("A searcher has exited the arena!!!")
+                    remove_from_searchers_list.append(searcher_ID)
+
+            # Delete searchers if they have reached the goal
+            for elem in remove_from_searchers_list:
+                del searcher_pos[elem]
+
+            if searcher_pos == {}:
+                print("Simulation Complete")
+                running = False
+                break
+
             # End of Loop
             n += 1
+            
 
-
-
+        ###################### ANIMATION UPDATE HERE ###########################
 
         for loc_ID in lost_pos:
             # Apply action
@@ -232,11 +317,13 @@ def main():
             # Plot new position
             drawEntity(lost_image, getImageLoc(loc), getOffsetLoc(getImageLoc(loc), LOST_OFFSET), GREEN)
 
-        for loc_ID in zombie_pos:
+        for zombie_ID in zombie_pos:
             # Apply action
-            loc = zombie_pos[loc_ID]
+            zombie_loc = zombie_pos[zombie_ID]
+            (dx, dy) = zombies_next_action[zombie_ID]
+            zombie_pos[zombie_ID] = (zombie_loc[0] + dx, zombie_loc[1] + dy)
             # Plot new position
-            drawEntity(zombie_image, getImageLoc(loc), getOffsetLoc(getImageLoc(loc), ZOMBIE_OFFSET), RED)
+            drawEntity(zombie_image, getImageLoc(zombie_pos[zombie_ID]), getOffsetLoc(getImageLoc(zombie_pos[zombie_ID]), ZOMBIE_OFFSET), RED)
 
 
         # event handling, gets all event from the event queue
